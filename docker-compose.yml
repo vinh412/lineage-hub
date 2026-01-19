@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: lineagehub-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: lineagehub
+      POSTGRES_USER: lineagehub
+      POSTGRES_PASSWORD: lineagehub123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lineagehub-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lineagehub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend service (uncomment when ready to run in Docker)
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: lineagehub-backend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: dev
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_NAME: lineagehub
+  #     DB_USER: lineagehub
+  #     DB_PASSWORD: lineagehub123
+  #     JWT_SECRET: your-256-bit-secret-key-here
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - lineagehub-network
+
+  # Frontend service (uncomment when ready)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: lineagehub-frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     NEXT_PUBLIC_API_URL: http://localhost:8080/api
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - lineagehub-network
+
+  # pgAdmin (optional - for database management)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: lineagehub-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@lineagehub.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - lineagehub-network
+    depends_on:
+      - postgres
+
+networks:
+  lineagehub-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
